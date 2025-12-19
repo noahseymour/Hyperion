@@ -57,5 +57,5 @@ object ParserCombinator {
   val twoDigit: Parser[String] = for {
     x <- digit
     y <- digit
-  } yield (x.toString + y.toString)
+  } yield x.toString + y.toString
 }
