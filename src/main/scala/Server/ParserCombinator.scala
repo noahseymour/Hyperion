@@ -1,25 +1,61 @@
 package Server
 
 object ParserCombinator {
-  type Parser[A] = String => List[(A, String)]
-  
-  private def result[A](a: A): Parser[A] = inp => List((a, inp))
-  
+  type Parser[a] = String => Option[(a, String)]
+
+  // Monad instance for Parser[A]
+  extension [a](p: Parser[a]) {
+    def map[b](f: a => b): Parser[b] = p(_).map((x, rest) => (f(x), rest))
+
+    def flatMap[b](f: a => Parser[b]): Parser[b] = str => for {
+      (a, rest) <- p(str)
+      (b, rest1) <- f(a)(rest)
+    } yield (b, rest1)
+
+    // No sensible definition
+    def foreach(f: a => Any): Unit = ()
+
+    // Applies a predicate to a parser.
+    def withFilter(pred: a => Boolean): Parser[a] = str => p(str).filter((x, _) => pred(x))
+
+    // Left-biased alternative
+    def +(q: Parser[a]): Parser[a] = str => p(str).orElse(q(str))
+  }
+
+  // Gives back a parser that does nothing to it's input
+  private def ignore[a](a: a): Parser[a] = str => Some((a, str))
+
   // Failure parser -> always fails
-  private def fail[A]: Parser[A] = _ => Nil
-  
+  private def fail[a]: Parser[a] = _ => None
+
   // Parses the next character in the inp
-  private def item: Parser[Char] = inp =>
-    if (inp.isEmpty) Nil
-    else List((inp.head, inp.tail))
-    
-  // True parser combinator. 
-  def or[A](p1: Parser[A])(p2: Parser[A]): Parser[A] = inp =>
-    p1(inp) ++ p2(inp)
-    
-  // Attempts to match the first char from the input string.
-  def sat(p: Char => Boolean): Parser[Char] = inp => for {
-    (x, rest) <- item(inp)
-    if p(x)
-  } yield (x, rest)
+  private def item: Parser[Char] = str =>
+    if (str.isEmpty) None
+    else Some((str.head, str.tail))
+
+  // Beautiful.
+  def sat(p: Char => Boolean): Parser[Char] = for {
+    q <- item
+    if p(q)
+  } yield q
+
+  // Applies parser p one or more times. Even more beautiful.
+  def some[a](p: Parser[a]): Parser[List[a]] = for {
+    x <- p
+    xs <- many(p)
+  } yield x :: xs
+
+  def many[a](p: Parser[a]): Parser[List[a]] = some(p) + ignore(Nil)
+
+  
+  /* Examples. */
+
+  val letter: Parser[Char] = sat(_.isLetter)
+  val word: Parser[List[Char]] = some(letter)
+
+  val digit: Parser[Char] = sat(_.isDigit)
+  val twoDigit: Parser[String] = for {
+    x <- digit
+    y <- digit
+  } yield (x.toString + y.toString)
 }
