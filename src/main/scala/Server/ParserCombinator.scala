@@ -5,8 +5,10 @@ object ParserCombinator {
 
   // Monad instance for Parser[A]
   extension [a](p: Parser[a]) {
+    // Scala's "fmap"
     def map[b](f: a => b): Parser[b] = p(_).map((x, rest) => (f(x), rest))
 
+    // Scala's "bind" - monadic sequencing of parsers
     def flatMap[b](f: a => Parser[b]): Parser[b] = str => for {
       (a, rest) <- p(str)
       (b, rest1) <- f(a)(rest)
@@ -22,25 +24,30 @@ object ParserCombinator {
     def +(q: Parser[a]): Parser[a] = str => p(str).orElse(q(str))
   }
 
-  // Gives back a parser that does nothing to it's input
-  private def ignore[a](a: a): Parser[a] = str => Some((a, str))
+  // Ignores the string given
+  def ignore[a](a: a): Parser[a] = str => Some((a, str))
 
   // Failure parser -> always fails
   private def fail[a]: Parser[a] = _ => None
 
-  // Parses the next character in the inp
+  // Parses the next character in the input
   private def item: Parser[Char] = str =>
     if (str.isEmpty) None
     else Some((str.head, str.tail))
 
-  // Beautiful.
+  // Returns a parser that matches on the predicate
   def sat(p: Char => Boolean): Parser[Char] = for {
     q <- item
     if p(q)
   } yield q
+  
+  def optional[a](p: Parser[a])(default: a): Parser[a] = p + ignore(default)
 
-  // Applies parser p one or more times. Even more beautiful.
-  def some[a](p: Parser[a]): Parser[List[a]] = for {
+  // Applies parser p zero or more times.
+  def many[a](p: Parser[a]): Parser[List[a]] = optional(many1(p))(Nil)
+
+  // Applies parser p one or more times.
+  def many1[a](p: Parser[a]): Parser[List[a]] = for {
     x <- p
     xs <- many(p)
   } yield x :: xs
@@ -49,9 +56,8 @@ object ParserCombinator {
 
   
   /* Examples. */
-
   val letter: Parser[Char] = sat(_.isLetter)
-  val word: Parser[List[Char]] = some(letter)
+  val word: Parser[List[Char]] = many1(letter)
 
   val digit: Parser[Char] = sat(_.isDigit)
   val twoDigit: Parser[String] = for {
