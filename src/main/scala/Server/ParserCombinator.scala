@@ -52,8 +52,34 @@ object ParserCombinator {
     xs <- many(p)
   } yield x :: xs
 
-  def many[a](p: Parser[a]): Parser[List[a]] = some(p) + ignore(Nil)
+  // Zero-or-more applications of P, where Ps are separated by SEP
+  def sepBy[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = optional(sepBy1(p)(sep))(Nil)
 
+  // One-or-more applications of P, where P's pattern is separated by SEP pattern
+  def sepBy1[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = for {
+    x <- p
+    xs <- many(for {
+      _ <- sep
+      y <- p
+    } yield y)
+  } yield x :: xs
+
+  // Zero-or-more applications of P, where Ps are separated by SEP, beginning with a separator.
+  def startSepBy[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = optional(startSepBy1(p)(sep))(Nil)
+
+  // One-or-more applications of P, where P's pattern is separated by SEP pattern
+  def startSepBy1[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = for {
+    _ <- sep
+    xs <- sepBy1(p)(sep)
+  } yield xs
+  
+  def identifier[a](id: String): Parser[String] = id match {
+    case ""  => ignore("")
+    case _    => for {
+      x <- sat(_ == id.head)
+      xs <- identifier(id.tail)
+    } yield x.toString + xs
+  }
   
   /* Examples. */
   val letter: Parser[Char] = sat(_.isLetter)
