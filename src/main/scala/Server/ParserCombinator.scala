@@ -41,9 +41,10 @@ object ParserCombinator {
     if p(q)
   } yield q
   
+  // Attempts to apply P. If it cannot match P it will do nothing.
   def optional[a](p: Parser[a])(default: a): Parser[a] = p + ignore(default)
 
-  // Applies parser p zero or more times.
+  // Applies parser p zero or more times. Note this NEVER fails
   def many[a](p: Parser[a]): Parser[List[a]] = optional(many1(p))(Nil)
 
   // Applies parser p one or more times.
@@ -52,10 +53,10 @@ object ParserCombinator {
     xs <- many(p)
   } yield x :: xs
 
-  // Zero-or-more applications of P, where Ps are separated by SEP
+  // Zero-or-more applications of P, where Ps are separated by SEP, beginning with P's pattern
   def sepBy[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = optional(sepBy1(p)(sep))(Nil)
 
-  // One-or-more applications of P, where P's pattern is separated by SEP pattern
+  // One-or-more applications of P, where P's pattern is separated by SEP pattern, beginning with P's pattern
   def sepBy1[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = for {
     x <- p
     xs <- many(for {
@@ -67,7 +68,7 @@ object ParserCombinator {
   // Zero-or-more applications of P, where Ps are separated by SEP, beginning with a separator.
   def startSepBy[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = optional(startSepBy1(p)(sep))(Nil)
 
-  // One-or-more applications of P, where P's pattern is separated by SEP pattern
+  // One-or-more applications of P, where P's pattern is separated by SEP pattern, beginning with SEP pattern
   def startSepBy1[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = for {
     _ <- sep
     xs <- sepBy1(p)(sep)
@@ -82,11 +83,11 @@ object ParserCombinator {
   }
   
   /* Examples. */
-  val letter: Parser[Char] = sat(_.isLetter)
-  val word: Parser[List[Char]] = many1(letter)
+  private val letter: Parser[Char] = sat(_.isLetter)
+  private val word: Parser[List[Char]] = many1(letter)
 
-  val digit: Parser[Char] = sat(_.isDigit)
-  val twoDigit: Parser[String] = for {
+  private val digit: Parser[Char] = sat(_.isDigit)
+  private val twoDigit: Parser[String] = for {
     x <- digit
     y <- digit
   } yield x.toString + y.toString
