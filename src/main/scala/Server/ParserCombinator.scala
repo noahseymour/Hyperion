@@ -28,10 +28,10 @@ object ParserCombinator {
   def ignore[a](a: a): Parser[a] = str => Some((a, str))
 
   // Failure parser -> always fails
-  private def fail[a]: Parser[a] = _ => None
+  def fail[a]: Parser[a] = _ => None
 
   // Parses the next character in the input
-  private def item: Parser[Char] = str =>
+  def item: Parser[Char] = str =>
     if (str.isEmpty) None
     else Some((str.head, str.tail))
 
@@ -83,11 +83,11 @@ object ParserCombinator {
   }
   
   /* Examples. */
-  private val letter: Parser[Char] = sat(_.isLetter)
-  private val word: Parser[List[Char]] = many1(letter)
+  val letter: Parser[Char] = sat(_.isLetter)
+  val word: Parser[List[Char]] = many1(letter)
 
-  private val digit: Parser[Char] = sat(_.isDigit)
-  private val twoDigit: Parser[String] = for {
+  val digit: Parser[Char] = sat(_.isDigit)
+  val twoDigit: Parser[String] = for {
     x <- digit
     y <- digit
   } yield x.toString + y.toString
