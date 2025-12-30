@@ -1,6 +1,7 @@
 package Server
 
 object ParserCombinator {
+  // TODO: parameterise over output context? Or change Option => Either?
   type Parser[a] = String => Option[(a, String)]
 
   // Monad instance for Parser[A]
