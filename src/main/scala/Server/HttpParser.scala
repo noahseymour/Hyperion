@@ -7,7 +7,6 @@ object HttpParser {
   private val SubDelims = "!$&'()*+,;="
   private val PCharSpecialSymbols = ":@"
   private val QuerySpecialSymbols = "/?"
-  private val HttpName = "HTTP"
   private val HexSymbols = "0123456789abcdefABCDEF"
   private val UnreservedSymbols = "-._~"
 
@@ -38,18 +37,21 @@ object HttpParser {
 
   private[Server] val origin: Parser[Target] = for {
     p <- absPath
-    q <- optional(query)("")
+    q <- optional(for {
+      _ <- identifier("?")
+      q <- query
+    } yield q)("")
   } yield Target.Origin(absPath = p, query = q)
-  private[Server] val absolute: Parser[Target] = ???
-  private[Server] val authority: Parser[Target] = ???
-  private[Server] val asterisk: Parser[Target] = ???
+  private[Server] val absolute: Parser[Target] = fail // TODO: complete
+  private[Server] val authority: Parser[Target] = fail // TODO: complete
+  private[Server] val asterisk: Parser[Target] = fail // TODO: complete
 
   private[Server] val target: Parser[Target] = origin + absolute + authority + asterisk
 
   private[Server] val version: Parser[Version] = for {
-    _ <- identifier(HttpName + "/")
+    _ <- identifier("HTTP/")
     major <- sat(_.isDigit)
     _ <- identifier(".")
     minor <- sat(_.isDigit)
-  } yield Version(major = major, minor = minor)
+  } yield Version(major = Integer.parseInt(major.toString), minor = Integer.parseInt(minor.toString))
 }
