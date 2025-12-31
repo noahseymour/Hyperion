@@ -1,7 +1,7 @@
 package Server
 
 object ParserCombinator {
-  // TODO: parameterise over output context? Or change Option => Either?
+  // TODO: parameterise output context? Or change Option => Either?
   type Parser[a] = String => Option[(a, String)]
 
   // Monad instance for Parser[A]
@@ -28,17 +28,17 @@ object ParserCombinator {
   // Ignores the string given
   def ignore[a](a: a): Parser[a] = str => Some((a, str))
 
-  // Failure parser -> always fails
+  // Failure parser
   def fail[a]: Parser[a] = _ => None
 
-  // Parses the next character in the input
-  def item: Parser[Char] = str =>
+  // Parses the next character of the input
+  def char: Parser[Char] = str =>
     if (str.isEmpty) None
     else Some((str.head, str.tail))
 
   // Returns a parser that matches on the predicate
   def sat(p: Char => Boolean): Parser[Char] = for {
-    q <- item
+    q <- char
     if p(q)
   } yield q
   
@@ -75,6 +75,7 @@ object ParserCombinator {
     xs <- sepBy1(p)(sep)
   } yield xs
   
+  // TODO: should NOT succeed on empty string & explaining comment
   def identifier[a](id: String): Parser[String] = id match {
     case ""  => ignore("")
     case _    => for {
@@ -82,6 +83,9 @@ object ParserCombinator {
       xs <- identifier(id.tail)
     } yield x.toString + xs
   }
+  
+  // Accepts the whole string to be parsed.
+  def consume: Parser[String] = str => Some((str, ""))
   
   /* Examples. */
   val letter: Parser[Char] = sat(_.isLetter)
