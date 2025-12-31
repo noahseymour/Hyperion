@@ -35,7 +35,6 @@ object HttpParser {
   private[Server] val PChar: Parser[String] = (unreserved + subDelims + sat(PCharSpecialSymbols.contains(_))).map(_.toString) + pctEncoded
 
   private[Server] val segment: Parser[String] = many(PChar).map(_.mkString)
-  // TODO: sepBy works?
   private[Server] val absPath: Parser[List[String]] = startSepBy1(segment)(sat(_ == '/'))
 
   private[Server] val query: Parser[String] = many(PChar + sat(QuerySpecialSymbols.contains(_)).map(_.toString)).
@@ -94,11 +93,11 @@ object HttpParser {
     value <- fieldValue
     _ <- optionalWhitespace
   } yield HeaderField(name = name, value = value)
-
-  // TODO: sepBy works?
-  private[Server] val headerFields: Parser[Map[String, String]] = sepBy(headerField)(crlf).map(
-    _.foldLeft(Map.empty)((m, hf) => m + (hf.name -> hf.value))
-  )
+  
+  private[Server] val headerFields: Parser[Map[String, String]] = for {
+    fields <- sepBy(headerField)(crlf)
+    _ <- crlf
+  } yield fields.foldLeft(Map.empty)((m, hf) => m + (hf.name -> hf.value))
 
   private[Server] val body: Parser[String] = consume
 
