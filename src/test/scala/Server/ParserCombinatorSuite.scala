@@ -200,6 +200,7 @@ class ParserCombinatorSuite extends AnyFunSuite {
   test("identifier fails on mismatch") {
     val p = identifier("hello")
     assert(fails(p, "hellx"))
+    assert(fails(p, ""))
   }
 
   test("identifier with empty string always succeeds") {
