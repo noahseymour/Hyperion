@@ -33,19 +33,19 @@ class HttpParserSuite extends AnyFunSuite {
   /* ---------- tchar / token / method ---------- */
 
   test("tchar parses letters and digits") {
-    assert(succeeds(tchar, "A"))
-    assert(succeeds(tchar, "7"))
+    assert(succeeds(TChar, "A"))
+    assert(succeeds(TChar, "7"))
   }
 
   test("tchar parses allowed symbols") {
     "!#$%&'*+-.^_`|~".foreach { c =>
-      assert(succeeds(tchar, c.toString))
+      assert(succeeds(TChar, c.toString))
     }
   }
 
   test("tchar rejects spaces and separators") {
-    assert(fails(tchar, " "))
-    assert(fails(tchar, "/"))
+    assert(fails(TChar, " "))
+    assert(fails(TChar, "/"))
   }
 
   test("token parses multiple tchars") {
@@ -103,22 +103,22 @@ class HttpParserSuite extends AnyFunSuite {
   /* ---------- pchar ---------- */
 
   test("pchar parses unreserved characters") {
-    assert(succeedsWith(pchar, "a", ("a", "")))
+    assert(succeedsWith(PChar, "a", ("a", "")))
   }
 
   test("pchar parses sub-delims") {
     "!$&'()*+,;=".foreach { c =>
-      assert(succeedsWith(pchar, c.toString, (c.toString, "")))
+      assert(succeedsWith(PChar, c.toString, (c.toString, "")))
     }
   }
 
   test("pchar parses : and @") {
-    assert(succeedsWith(pchar, ":", (":", "")))
-    assert(succeedsWith(pchar, "@", ("@", "")))
+    assert(succeedsWith(PChar, ":", (":", "")))
+    assert(succeedsWith(PChar, "@", ("@", "")))
   }
 
   test("pchar parses percent-encoded values") {
-    assert(succeedsWith(pchar, "%20", ("%20", "")))
+    assert(succeedsWith(PChar, "%20", ("%20", "")))
   }
 
 
@@ -195,6 +195,7 @@ class HttpParserSuite extends AnyFunSuite {
 
   /* ---------- HTTP version ---------- */
 
+  // TODO: why does this fail?
   test("version parses HTTP version correctly") {
     assert(succeedsWith(version, "HTTP/1.1",
       (Version(1, 1), "")))

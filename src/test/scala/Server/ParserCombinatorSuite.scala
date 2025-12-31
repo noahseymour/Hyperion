@@ -19,11 +19,11 @@ class ParserCombinatorSuite extends AnyFunSuite {
   /* ---------- item ---------- */
 
   test("item consumes exactly one character") {
-    assert(succeedsWith(item, "abc", ('a', "bc")))
+    assert(succeedsWith(char, "abc", ('a', "bc")))
   }
 
   test("item fails on empty input") {
-    assert(fails(item, ""))
+    assert(fails(char, ""))
   }
 
 
