@@ -1,10 +1,5 @@
 package Server
 
-enum Method {
-  case GET
-  case HEAD
-}
-
 enum Target {
   case Origin(absPath: List[String], query: String)
   case Absolute
@@ -14,8 +9,8 @@ enum Target {
 
 class Version(val major: Int, val minor: Int)
 
-class HttpRequest(val method: Method, 
+class HttpRequest(val method: String, 
                   val target: Target,
                   val version: Version,
-                  val headerFields: Map[Unit, Unit], // TODO: create header field type
+                  val headerFields: Map[String, String],
                   val body: String) // TODO: string the best option here?
