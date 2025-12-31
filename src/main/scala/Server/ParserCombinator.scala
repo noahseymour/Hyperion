@@ -31,7 +31,7 @@ object ParserCombinator {
   // Failure parser
   def fail[a]: Parser[a] = _ => None
 
-  // Parses the next character of the input
+  // Parses the first character of the input.
   def char: Parser[Char] = str =>
     if (str.isEmpty) None
     else Some((str.head, str.tail))
@@ -54,10 +54,10 @@ object ParserCombinator {
     xs <- many(p)
   } yield x :: xs
 
-  // Zero-or-more applications of P, where Ps are separated by SEP, beginning with P's pattern
+  // Applies SEP in between Ps, beginning and ending with P zero-or-more times, extracting P.
   def sepBy[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = optional(sepBy1(p)(sep))(Nil)
 
-  // One-or-more applications of P, where P's pattern is separated by SEP pattern, beginning with P's pattern
+  // Applies SEP in between Ps, beginning and ending with P one-or-more times, extracting P.
   def sepBy1[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = for {
     x <- p
     xs <- many(for {
@@ -66,16 +66,16 @@ object ParserCombinator {
     } yield y)
   } yield x :: xs
 
-  // Zero-or-more applications of P, where Ps are separated by SEP, beginning with a separator.
+  // Applies P in between SEPs, beginning with SEP and ending with P zero-or-more times, extracting P.
   def startSepBy[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = optional(startSepBy1(p)(sep))(Nil)
 
-  // One-or-more applications of P, where P's pattern is separated by SEP pattern, beginning with SEP pattern
+  // Applies P in between SEPs, beginning with SEP and ending with P one-or-more times, extracting P.
   def startSepBy1[a, b](p: Parser[a])(sep: Parser[b]): Parser[List[a]] = for {
     _ <- sep
     xs <- sepBy1(p)(sep)
   } yield xs
   
-  // TODO: should NOT succeed on empty string & explaining comment
+  // Matches ID at the start of the input.
   def identifier[a](id: String): Parser[String] = id match {
     case ""  => ignore("")
     case _    => for {
@@ -84,7 +84,7 @@ object ParserCombinator {
     } yield x.toString + xs
   }
   
-  // Accepts the whole string to be parsed.
+  // Parses the whole of the input. 
   def consume: Parser[String] = str => Some((str, ""))
   
   /* Examples. */
