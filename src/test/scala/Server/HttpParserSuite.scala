@@ -208,4 +208,194 @@ class HttpParserSuite extends AnyFunSuite {
     assert(fails(version, "HTP/1.1"))
   }
 
+
+  /* ---------- field-name ---------- */
+
+  test("fieldName parses valid token") {
+    assert(succeedsWith(fieldName, "Host:", ("Host", ":")))
+  }
+
+  test("fieldName rejects invalid characters") {
+    assert(fails(fieldName, "Ho st"))
+    assert(fails(fieldName, "Host/"))
+  }
+
+
+  /* ---------- whitespace ---------- */
+
+  test("whitespace parses space and tab") {
+    assert(succeeds(whitespace, " "))
+    assert(succeeds(whitespace, "\t"))
+  }
+
+  test("whitespace rejects other characters") {
+    assert(fails(whitespace, "a"))
+  }
+
+
+  /* ---------- field-content ---------- */
+
+  test("fieldContent parses visible characters") {
+    assert(succeedsWith(fieldContent, "abc", ("abc", "")))
+  }
+
+  test("fieldContent allows internal whitespace") {
+    assert(succeedsWith(fieldContent, "a b", ("a b", "")))
+  }
+
+  test("fieldContent rejects leading whitespace") {
+    assert(fails(fieldContent, " abc"))
+  }
+
+
+  /* ---------- obs-fold ---------- */
+
+  test("obsFold parses folded header continuation") {
+    assert(succeedsWith(obsFold, "\r\n value", ("\r\n value", "")))
+  }
+
+  test("obsFold fails without whitespace after CRLF") {
+    assert(fails(obsFold, "\r\nx"))
+  }
+
+
+  /* ---------- field-value ---------- */
+
+  test("fieldValue parses simple value") {
+    assert(succeedsWith(fieldValue, "text/plain", ("text/plain", "")))
+  }
+
+  test("fieldValue parses folded values") {
+    val input = "abc\r\n def"
+    assert(succeedsWith(fieldValue, input, ("abc\r\n def", "")))
+  }
+
+  test("fieldValue allows empty value") {
+    assert(succeedsWith(fieldValue, "", ("", "")))
+  }
+
+
+  /* ---------- header-field ---------- */
+
+  test("headerField parses simple header") {
+    val input = "Host: example.com"
+    val out = HeaderField("Host", "example.com")
+    assert(succeedsWith(headerField, input, (out, "")))
+  }
+
+  test("headerField allows optional whitespace after colon") {
+    val input = "Host:\t example.com"
+    val out = HeaderField("Host", "example.com")
+    assert(succeedsWith(headerField, input, (out, "")))
+  }
+
+  test("headerField trims trailing whitespace") {
+    val input = "Host: example.com   "
+    val out = HeaderField("Host", "example.com")
+    assert(succeedsWith(headerField, input, (out, "")))
+  }
+
+  test("headerField fails without colon") {
+    assert(fails(headerField, "Host example.com"))
+  }
+
+
+  /* ---------- headerFields ---------- */
+
+  test("headerFields parses single header") {
+    val input =
+      "Host: example.com\r\n"
+
+    assert(succeedsWith(
+      headerFields,
+      input,
+      (Map("Host" -> "example.com"), "")
+    ))
+  }
+
+  test("headerFields parses multiple headers") {
+    val input =
+      "Host: example.com\r\n" +
+        "Content-Type: text/plain\r\n"
+
+    assert(succeedsWith(
+      headerFields,
+      input,
+      (Map(
+        "Host" -> "example.com",
+        "Content-Type" -> "text/plain"
+      ), "")
+    ))
+  }
+
+  test("headerFields allows folded headers") {
+    val input =
+      "X-Test: abc\r\n" +
+        " def\r\n"
+
+    assert(succeedsWith(
+      headerFields,
+      input,
+      (Map("X-Test" -> "abc\r\n def"), "")
+    ))
+  }
+
+  test("headerFields fails without terminating CRLF") {
+    val input = "Host: example.com"
+    assert(fails(headerFields, input))
+  }
+
+
+  /* ---------- body ---------- */
+
+  test("body consumes entire remaining input") {
+    assert(succeedsWith(body, "hello world", ("hello world", "")))
+  }
+
+  test("body may be empty") {
+    assert(succeedsWith(body, "", ("", "")))
+  }
+
+
+  /* ---------- full request (sanity check) ---------- */
+
+  test("parse full HTTP request with headers and body") {
+    val input =
+      "GET /path HTTP/1.1\r\n" +
+        "Host: example.com\r\n" +
+        "Content-Type: text/plain\r\n" +
+        "\r\n" +
+        "hello"
+
+    assert(succeeds(parse, input))
+  }
+
+  test("parse full HTTP request with query, folded headers, and body") {
+    val input =
+      "POST /a/b/c?x=1&y=2 HTTP/1.1\r\n" +
+        "Host: example.com\r\n" +
+        "X-Long-Header: first-part\r\n" +
+        "\tsecond-part\r\n" +
+        "Content-Type: text/plain\r\n" +
+        "\r\n" +
+        "This is the body.\nWith multiple lines."
+
+    val expected =
+      HttpRequest(
+        method = "POST",
+        target = Target.Origin(
+          absPath = List("a", "b", "c"),
+          query = "x=1&y=2"
+        ),
+        version = Version(1, 1),
+        headerFields = Map(
+          "Host" -> "example.com",
+          "X-Long-Header" -> "first-part\r\n\tsecond-part",
+          "Content-Type" -> "text/plain"
+        ),
+        body = "This is the body.\nWith multiple lines."
+      )
+
+    assert(succeedsWith(parse, input, (expected, "")))
+  }
 }
