@@ -2,7 +2,7 @@ package Server
 
 import ParserCombinator.*
 
-private[Server] class HeaderField(val name: String, val value: String)
+private[Server] case class HeaderField(val name: String, val value: String)
 
 object HttpParser {
   private val TCharSymbols = "!#$%&'*+-.^_`|~"
@@ -80,7 +80,7 @@ object HttpParser {
 
   private[Server] val obsFold: Parser[String] = for {
     _ <- crlf
-    ws <- many1(whitespace).map(_.toString)
+    ws <- many1(whitespace).map(_.mkString)
   } yield "\r\n" + ws
 
   private[Server] val fieldValue: Parser[String] = many(fieldContent + obsFold).map(_.mkString)
@@ -99,7 +99,14 @@ object HttpParser {
     _ <- crlf
   } yield fields.foldLeft(Map.empty)((m, hf) => m + (hf.name -> hf.value))
 
+  /* MESSAGE-BODY PARSING 
+  * 
+  * If the last header-field was ill-formed, it will work its way into the message-body, but this will be picked up
+  * in the next (semantic) stage of analysis. */
+
   private[Server] val body: Parser[String] = consume
+
+  /* COMPLETE PARSER */
 
   // Parses a HTTP request.
   val parse: Parser[HttpRequest] = for {

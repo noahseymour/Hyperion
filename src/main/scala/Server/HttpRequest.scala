@@ -7,9 +7,9 @@ enum Target {
   case Asterisk
 }
 
-class Version(val major: Int, val minor: Int)
+case class Version(val major: Int, val minor: Int)
 
-class HttpRequest(val method: String, 
+case class HttpRequest(val method: String,
                   val target: Target,
                   val version: Version,
                   val headerFields: Map[String, String],
