@@ -84,7 +84,7 @@ object ParserCombinator {
     } yield x.toString + xs
   }
   
-  // Parses the whole of the input. 
+  // Parses the whole of the input indiscriminately.
   def consume: Parser[String] = str => Some((str, ""))
   
   /* Examples. */
