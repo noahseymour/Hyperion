@@ -4,7 +4,7 @@
 
 **Hyperion** is a lightweight HTTP web framework written from scratch. This project is primarily an educational endeavour, focused on understanding the HTTP protocol and server design at a low level.
 
-HTTP specification found [here](https://httpwg.org/specs/rfc7230.html).
+HTTP syntax and semantic specifications can be found [here](https://www.rfc-editor.org/rfc/rfc9112.html) and [here](https://www.rfc-editor.org/rfc/rfc9110.html)
 
 #### Components (so far)
 
