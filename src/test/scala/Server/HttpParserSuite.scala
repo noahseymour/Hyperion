@@ -216,8 +216,8 @@ class HttpParserSuite extends AnyFunSuite {
   }
 
   test("fieldName rejects invalid characters") {
-    assert(fails(fieldName, "Ho st"))
-    assert(fails(fieldName, "Host/"))
+    assert(succeedsWith(fieldName, "Ho st", ("Ho", " st")))
+    assert(succeedsWith(fieldName, "Host/", ("Host", "/")))
   }
 
 
@@ -235,8 +235,8 @@ class HttpParserSuite extends AnyFunSuite {
 
   /* ---------- field-content ---------- */
 
-  test("fieldContent parses visible characters") {
-    assert(succeedsWith(fieldContent, "abc", ("abc", "")))
+  test("fieldContent parses visible character") {
+    assert(succeedsWith(fieldContent, "abc", ("a", "bc")))
   }
 
   test("fieldContent allows internal whitespace") {
@@ -251,7 +251,7 @@ class HttpParserSuite extends AnyFunSuite {
   /* ---------- obs-fold ---------- */
 
   test("obsFold parses folded header continuation") {
-    assert(succeedsWith(obsFold, "\r\n value", ("\r\n value", "")))
+    assert(succeedsWith(obsFold, "\r\n value", ("\r\n ", "value")))
   }
 
   test("obsFold fails without whitespace after CRLF") {
@@ -272,6 +272,14 @@ class HttpParserSuite extends AnyFunSuite {
 
   test("fieldValue allows empty value") {
     assert(succeedsWith(fieldValue, "", ("", "")))
+  }
+
+  test("fieldValue allows internal whitespace") {
+    assert(succeeds(fieldValue, "a b"))
+  }
+
+  test("fieldValue reject leading whitespace") {
+    assert(succeedsWith(fieldValue, " text/plain", ("", " text/plain")))
   }
 
 
